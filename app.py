@@ -9,7 +9,7 @@ LrdetectFile = open('model.pckl','rb')
 Lrdetect_Model = pickle.load(LrdetectFile)
 LrdetectFile.close()
 st.title("LangDetect: Language Detector")
-input_test = st.text_input("Enter text here: ", 'Welcome to LangDetect ')
+input_test = st.text_input("Enter text here:", 'Welcome to LangDetect ')
 
 res = Lrdetect_Model.predict([input_test])
 
