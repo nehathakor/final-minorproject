@@ -102,3 +102,5 @@ st.markdown("<h3>We support the following 5 languages:</h3>", unsafe_allow_html=
 st.markdown("<ul><li>English</li><li>Hindi</li><li>Spanish</li><li>Arabic</li><li>Russian</li></ul>", unsafe_allow_html=True)
 
 st.markdown("<div class='footer'>Made by Neha and Sonika</div>", unsafe_allow_html=True)
+
+
