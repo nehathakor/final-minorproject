@@ -6,6 +6,8 @@ import webbrowser
 global Lrdetect_Model
 
 LrdetectFile = open('model.pckl','rb')
+model = pickle.load(open('model.pckl', 'rb'))
+print(type(model))
 Lrdetect_Model = pickle.load(LrdetectFile)
 LrdetectFile.close()
 
@@ -89,7 +91,7 @@ st.markdown("""
 st.markdown("<h3 class='title'>LangDetect: Language Detector</h3>", unsafe_allow_html=True)
 
 # Text input
-input_test = st.text_input("Enter text here:", 'Welcome to LangDetect ', key="input", placeholder="Type your text here...")
+input_test = st.text_input("Enter text here:", key="input", placeholder="Type your text here...")
 
 # Button
 button_clicked = st.button("Detect Language", key="button")
