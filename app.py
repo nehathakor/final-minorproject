@@ -1,108 +1,101 @@
 import pickle
-import string
 import streamlit as st
-import webbrowser
+import numpy as np
+from googletrans import Translator
 
-global Lrdetect_Model
+# Load Model
+with open('model.pckl', 'rb') as LrdetectFile:
+    Lrdetect_Model = pickle.load(LrdetectFile)
 
-LrdetectFile = open('model.pckl','rb')
-model = pickle.load(open('model.pckl', 'rb'))
-print(type(model))
-Lrdetect_Model = pickle.load(LrdetectFile)
-LrdetectFile.close()
+translator = Translator()
 
+# Custom CSS for Background & Styling
 st.markdown("""
     <style>
-    .main {
-        background-color: black;
-        font-family: Arial, sans-serif;
-    }
-    .title {
-        color: #4CAF50;
-        text-align: center;
-    }
-    .text-input {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 10px;
-        width: 100%;
-        box-sizing: border-box;
-        font-size: 16px;
-    }
-    .button {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        text-align: center;
-    }
-    .button:hover {
-        background-color: #45a049;
-    }
-    .footer {
+        /* Background Image */
+        /* Title Styling */
+        .title {
+            color: white;
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        /* Button Styling */
+        .stButton>button {
+            background-color: #250674;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .stButton>button:hover {
+            background-color: #1b07ac;
+            color: white;
+        }
+        /* Footer */
+         .footer {
         text-align: center;
         font-size: 14px;
         color: #777;
         margin-top: 20px;
-    }
-            
-    .navbar {
-        overflow: hidden;
-        background-color: #333;
-    }
-    .navbar a {
-        float: left;
-        display: block;
-        color: white;
-        text-align: center;
-        padding: 10px 16px;
-        text-decoration: none;
-    }
-    .navbar a:hover {
-        background-color: #ddd;
-        color: black;
-    }
-            
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# st.title("LangDetect: Language Detector")
-# input_test = st.text_input("Enter text here:", 'Welcome to LangDetect ')
+st.markdown("<h1 class='title'>Customer Support Language Assistant</h1>", unsafe_allow_html=True)
 
-# res = Lrdetect_Model.predict([input_test])
+# Store detected language in session state
+if 'detected_lang' not in st.session_state:
+    st.session_state['detected_lang'] = None
+if 'translated_text' not in st.session_state:
+    st.session_state['translated_text'] = None
+if 'converted_reply' not in st.session_state:
+    st.session_state['converted_reply'] = None
 
-# button_clicked = st.button("Detect Language")
-# if button_clicked:
-# 	st.text(f'The language "{input_test}" is {res[0]}')
-	
+# Step 1: Detect Language
+input_text = st.text_area("📩 Enter received message:", placeholder="Paste the customer's message here...")
 
-# st.write(f'We supports given 5 languages: ')
-# st.write(f'English')
-# st.write(f'Hindi')
-# st.write(f'Spanish')
-# st.write(f'Arabic')
-# st.write(f'Russian')
+if st.button("🔍 Detect Language"):
+    res = Lrdetect_Model.predict([input_text])  # Predict language
+    detected_lang = res[0]
+    confidence = np.max(Lrdetect_Model.predict_proba([input_text]))
 
-# st.markdown("<h3 style='text-align: center;'>Made by Neha and Sonika</h3>", unsafe_allow_html=True)
+    # Store detected language
+    st.session_state['detected_lang'] = detected_lang
+    st.success(f"**Detected Language:** {detected_lang}")
 
-st.markdown("<h3 class='title'>LangDetect: Language Detector</h3>", unsafe_allow_html=True)
+# List of supported languages
+specified_languages = {
+    'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Punjabi': 'pa', 'Tamil': 'ta', 
+    'Telugu': 'te', 'Kannada': 'kn', 'Malayalam': 'ml', 'Bengali': 'bn', 'Marathi': 'mr', 
+    'Urdu': 'ur', 'Odia': 'or', 'Assamese': 'as', 'Maithili': 'mai', 'Santali': 'sat',
+    'French': 'fr', 'Spanish': 'es', 'Portuguese': 'pt', 'Italian': 'it', 'Russian': 'ru', 
+    'Swedish': 'sv', 'Dutch': 'nl', 'Arabic': 'ar', 'Turkish': 'tr', 'German': 'de', 
+    'Danish': 'da', 'Greek': 'el'
+}
 
-# Text input
-input_test = st.text_input("Enter text here:", key="input", placeholder="Type your text here...")
+# Step 2: Translate Detected Language to Known Language
+if st.session_state['detected_lang']:
+    target_language = st.selectbox("🌍 Translate to:", list(specified_languages.keys()), key="translate_lang")
+    
+    if st.button("🔄 Translate"):
+        st.session_state['translated_text'] = translator.translate(input_text, dest=specified_languages[target_language]).text
+        st.success(f"**Translated Text:** {st.session_state['translated_text']}")
 
-# Button
-button_clicked = st.button("Detect Language", key="button")
+# Step 3: Convert Reply Back to Detected Language
+if st.session_state['detected_lang']:
+    reply_text = st.text_area("📝 Enter your reply:", placeholder="Type your response here...")
 
-if button_clicked:
-    res = Lrdetect_Model.predict([input_test])
-    st.markdown(f"<h5 class='title'>The language '{input_test}' is {res[0]}</h5>", unsafe_allow_html=True)
+    if st.button("💬 Convert to Customer's Language"):
+        detected_code = specified_languages.get(st.session_state['detected_lang'], 'en')  # Get language code
+        st.session_state['converted_reply'] = translator.translate(reply_text, dest=detected_code).text
+        st.success(f"**Reply in {st.session_state['detected_lang']}:** {st.session_state['converted_reply']}")
 
-st.markdown("<h3>We support the following 5 languages:</h3>", unsafe_allow_html=True)
-st.markdown("<ul><li>English</li><li>Hindi</li><li>Spanish</li><li>Arabic</li><li>Russian</li></ul>", unsafe_allow_html=True)
+st.markdown("""
+    <h3 style="color:white;">🌐 Supported Languages:</h3>
+""", unsafe_allow_html=True)
 
-st.markdown("<div class='footer'>Made by Neha and Sonika</div>", unsafe_allow_html=True)
+st.markdown("<ul><li>French</li><li>Spanish</li><li>Portugese</li><li>Italian</li><li>Russian</li><li>Sweedish</li><li>Malayalam</li><li>Dutch</li><li>Arabic</li><li>Turkish</li><li>German</li><li>Tamil</li><li>English</li><li>Danish</li><li>Kannada</li><li>Greek</li><li>Hindi</li></ul>", unsafe_allow_html=True)
 
-
+st.markdown("<div class='footer'>🚀 Made by Neha and Sonika</div>", unsafe_allow_html=True)
